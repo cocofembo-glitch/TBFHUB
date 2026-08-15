@@ -17,6 +17,7 @@ const db = firebase.database();
 const loginTriggerBtn = document.getElementById('login-trigger-btn');
 const loginModal = document.getElementById('login-modal');
 const saveUserBtn = document.getElementById('save-user-btn');
+const closeModalBtn = document.getElementById('close-modal-btn');
 const logoutBtn = document.getElementById('logout-btn');
 
 const userProfile = document.getElementById('user-profile');
@@ -52,13 +53,13 @@ function applyUserSession() {
 
     // Зміна промпту в терміналі
     const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
-    termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
+    if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
 
     // Перевірка на Адміна
     if (currentUser.username.toLowerCase() === '@cocofembo') {
-        adminPanel.style.display = 'block';
+        if (adminPanel) adminPanel.style.display = 'block';
     } else {
-        adminPanel.style.display = 'none';
+        if (adminPanel) adminPanel.style.display = 'none';
     }
 }
 
@@ -67,34 +68,37 @@ function resetUserSession() {
     localStorage.removeItem('tbf_user');
     loginTriggerBtn.style.display = 'inline-block';
     userProfile.style.display = 'none';
-    adminPanel.style.display = 'none';
-    termPrompt.textContent = 'guest@tbfhub:~$';
+    if (adminPanel) adminPanel.style.display = 'none';
+    if (termPrompt) termPrompt.textContent = 'guest@tbfhub:~$';
 }
 
-// Модалка входу
-loginTriggerBtn.addEventListener('click', () => loginModal.style.display = 'flex');
+// Модальне вікно
+if (loginTriggerBtn) loginTriggerBtn.addEventListener('click', () => loginModal.style.display = 'flex');
+if (closeModalBtn) closeModalBtn.addEventListener('click', () => loginModal.style.display = 'none');
 
-saveUserBtn.addEventListener('click', () => {
-    let username = document.getElementById('input-username').value.trim();
-    let name = document.getElementById('input-displayname').value.trim();
+if (saveUserBtn) {
+    saveUserBtn.addEventListener('click', () => {
+        let username = document.getElementById('input-username').value.trim();
+        let name = document.getElementById('input-displayname').value.trim();
 
-    if (!username) return alert('Вкажи юзернейм!');
-    if (!username.startsWith('@')) username = '@' + username;
-    if (!name) name = username;
+        if (!username) return alert('Заповни юзернейм!');
+        if (!username.startsWith('@')) username = '@' + username;
+        if (!name) name = username;
 
-    // Спеціальний дефолт для адміна
-    if (username.toLowerCase() === '@cocofembo' && name === '@cocofembo') {
-        name = 'ADMIN.TBF';
-    }
+        // Автоматичне ім'я для адміна, якщо поле порожнє
+        if (username.toLowerCase() === '@cocofembo' && name === '@cocofembo') {
+            name = 'ADMIN.TBF';
+        }
 
-    currentUser = { username, name };
-    localStorage.setItem('tbf_user', JSON.stringify(currentUser));
-    
-    loginModal.style.display = 'none';
-    applyUserSession();
-});
+        currentUser = { username, name };
+        localStorage.setItem('tbf_user', JSON.stringify(currentUser));
+        
+        loginModal.style.display = 'none';
+        applyUserSession();
+    });
+}
 
-logoutBtn.addEventListener('click', resetUserSession);
+if (logoutBtn) logoutBtn.addEventListener('click', resetUserSession);
 
 // --- 2. Публікація проєктів у БД ---
 if (addProjectForm) {
@@ -222,6 +226,5 @@ function printTermMsg(msg) {
     terminalOutput.scrollTop = terminalOutput.scrollHeight;
 }
 
-// Ініціалізація при завантаженні
+// Запуск
 loadSession();
-              
