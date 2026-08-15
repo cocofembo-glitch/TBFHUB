@@ -26,7 +26,7 @@ TBFHUB — це веб-платформа та інтерактивний тер
 ### 🚀 Запуск проєкту
 
 Просто відкрий посилання в браузері:
-👉 **[https://cocofembo-glitch.github.io](https://cocofembo-glitch.github.io)**
+👉 **(https://cocofembo-glitch.github.io/TBFHUB/)**
 
 ---
 
