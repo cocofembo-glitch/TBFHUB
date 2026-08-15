@@ -25,11 +25,9 @@ const userDisplayName = document.getElementById('user-display-name');
 const userHandle = document.getElementById('user-handle');
 
 const adminPanel = document.getElementById('admin-panel');
-const addProjectForm = document.getElementById('add-project-form');
 const projectsContainer = document.getElementById('projects-container');
 const termPrompt = document.getElementById('term-prompt');
 
-// Поточний користувач
 let currentUser = null;
 
 // --- 1. Логіка користувачів (LocalStorage) ---
@@ -46,33 +44,35 @@ function loadSession() {
 function applyUserSession() {
     if (!currentUser) return;
 
-    loginTriggerBtn.style.display = 'none';
-    userProfile.style.display = 'flex';
-    userDisplayName.textContent = currentUser.name;
-    userHandle.textContent = currentUser.username;
+    if (loginTriggerBtn) loginTriggerBtn.style.display = 'none';
+    if (userProfile) userProfile.style.display = 'flex';
+    if (userDisplayName) userDisplayName.textContent = currentUser.name;
+    if (userHandle) userHandle.textContent = currentUser.username;
 
-    // Зміна промпту в терміналі
     const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
     if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
 
-    // Перевірка на Адміна
     if (currentUser.username.toLowerCase() === '@cocofembo') {
         if (adminPanel) adminPanel.style.display = 'block';
     } else {
         if (adminPanel) adminPanel.style.display = 'none';
     }
+
+    // Оновлюємо відображення картка-кнопок
+    loadProjects();
 }
 
 function resetUserSession() {
     currentUser = null;
     localStorage.removeItem('tbf_user');
-    loginTriggerBtn.style.display = 'inline-block';
-    userProfile.style.display = 'none';
+    if (loginTriggerBtn) loginTriggerBtn.style.display = 'inline-block';
+    if (userProfile) userProfile.style.display = 'none';
     if (adminPanel) adminPanel.style.display = 'none';
     if (termPrompt) termPrompt.textContent = 'guest@tbfhub:~$';
+    
+    loadProjects();
 }
 
-// Модальне вікно
 if (loginTriggerBtn) loginTriggerBtn.addEventListener('click', () => loginModal.style.display = 'flex');
 if (closeModalBtn) closeModalBtn.addEventListener('click', () => loginModal.style.display = 'none');
 
@@ -85,7 +85,6 @@ if (saveUserBtn) {
         if (!username.startsWith('@')) username = '@' + username;
         if (!name) name = username;
 
-        // Автоматичне ім'я для адміна, якщо поле порожнє
         if (username.toLowerCase() === '@cocofembo' && name === '@cocofembo') {
             name = 'ADMIN.TBF';
         }
@@ -101,10 +100,10 @@ if (saveUserBtn) {
 if (logoutBtn) logoutBtn.addEventListener('click', resetUserSession);
 
 // --- 2. Публікація проєктів у БД ---
-if (addProjectForm) {
-    addProjectForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+const publishBtn = document.getElementById('publish-btn');
 
+if (publishBtn) {
+    publishBtn.addEventListener('click', () => {
         if (!currentUser || currentUser.username.toLowerCase() !== '@cocofembo') {
             alert('Тільки @cocofembo може публікувати проєкти!');
             return;
@@ -115,19 +114,37 @@ if (addProjectForm) {
         const desc = document.getElementById('proj-desc').value.trim();
         const code = document.getElementById('proj-code').value.trim();
 
+        if (!title || !desc) {
+            alert('Заповни назву та опис!');
+            return;
+        }
+
+        publishBtn.innerText = "Публікація...";
+
         db.ref('projects').push({
-            title, tag, desc, code,
+            title: title,
+            tag: tag || 'General',
+            desc: desc,
+            code: code || '',
             author: currentUser.name,
             timestamp: Date.now()
         }).then(() => {
-            alert("🚀 Проєкт успішно опубліковано!");
-            addProjectForm.reset();
-        }).catch(err => alert("Помилка: " + err.message));
+            document.getElementById('proj-title').value = '';
+            document.getElementById('proj-tag').value = '';
+            document.getElementById('proj-desc').value = '';
+            document.getElementById('proj-code').value = '';
+            publishBtn.innerText = "🚀 Опублікувати проєкт";
+        }).catch(err => {
+            alert("Помилка: " + err.message);
+            publishBtn.innerText = "🚀 Опублікувати проєкт";
+        });
     });
 }
 
-// --- 3. Відображення проєктів ---
-if (projectsContainer) {
+// --- 3. Відображення та видалення проєктів ---
+function loadProjects() {
+    if (!projectsContainer) return;
+
     db.ref('projects').on('value', (snapshot) => {
         projectsContainer.innerHTML = "";
         const data = snapshot.val();
@@ -137,6 +154,7 @@ if (projectsContainer) {
             return;
         }
 
+        const isAdmin = currentUser && currentUser.username.toLowerCase() === '@cocofembo';
         const projectsArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         projectsArray.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -150,11 +168,22 @@ if (projectsContainer) {
                 </div>
                 <p class="project-desc">${escapeHtml(proj.desc)}</p>
                 ${proj.code ? `<div class="project-code"><code>${escapeHtml(proj.code)}</code></div>` : ''}
+                ${isAdmin ? `<button class="delete-btn" onclick="deleteProject('${proj.id}')">🗑 Видалити</button>` : ''}
             `;
             projectsContainer.appendChild(card);
         });
     });
 }
+
+// Глобальна функція видалення проєкту за ID
+window.deleteProject = function(id) {
+    if (!currentUser || currentUser.username.toLowerCase() !== '@cocofembo') return;
+    if (confirm("Точно видалити цей проєкт?")) {
+        db.ref('projects/' + id).remove()
+            .then(() => alert("Проєкт видалено!"))
+            .catch(err => alert("Помилка видалення: " + err.message));
+    }
+};
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -171,7 +200,7 @@ if (cmdInput) {
             const cmd = cmdInput.value.trim().toLowerCase();
             cmdInput.value = '';
 
-            const promptText = termPrompt.textContent;
+            const promptText = termPrompt ? termPrompt.textContent : 'guest@tbfhub:~$';
             const line = document.createElement('p');
             line.innerHTML = `<span class="prompt">${promptText}</span> ${escapeHtml(cmd)}`;
             terminalOutput.appendChild(line);
@@ -226,5 +255,5 @@ function printTermMsg(msg) {
     terminalOutput.scrollTop = terminalOutput.scrollHeight;
 }
 
-// Запуск
 loadSession();
+                              
