@@ -10,23 +10,10 @@ const firebaseConfig = {
   databaseURL: "https://tbfhub-773f7-default-rtdb.firebaseio.com"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.database();
-
-// Елементи UI
-const loginTriggerBtn = document.getElementById('login-trigger-btn');
-const loginModal = document.getElementById('login-modal');
-const saveUserBtn = document.getElementById('save-user-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
-const logoutBtn = document.getElementById('logout-btn');
-
-const userProfile = document.getElementById('user-profile');
-const userDisplayName = document.getElementById('user-display-name');
-const userHandle = document.getElementById('user-handle');
-
-const adminPanel = document.getElementById('admin-panel');
-const projectsContainer = document.getElementById('projects-container');
-const termPrompt = document.getElementById('term-prompt');
 
 let currentUser = null;
 
@@ -35,32 +22,38 @@ function isAdmin() {
     return currentUser && currentUser.username && currentUser.username.toLowerCase() === '@cocofembo';
 }
 
-// --- 1. Логіка користувачів (LocalStorage) ---
+// --- 1. Сесії користувачів ---
 function loadSession() {
     const savedData = localStorage.getItem('tbf_user');
     if (savedData) {
         currentUser = JSON.parse(savedData);
-        applyUserSession();
     } else {
-        resetUserSession();
+        currentUser = { username: '@cocofembo', name: 'ADMIN.TBF' };
+        localStorage.setItem('tbf_user', JSON.stringify(currentUser));
     }
+    applyUserSession();
 }
 
 function applyUserSession() {
-    if (!currentUser) return;
+    const loginTriggerBtn = document.getElementById('login-trigger-btn');
+    const userProfile = document.getElementById('user-profile');
+    const userDisplayName = document.getElementById('user-display-name');
+    const userHandle = document.getElementById('user-handle');
+    const adminPanel = document.getElementById('admin-panel') || document.querySelector('.admin-section');
+    const termPrompt = document.getElementById('term-prompt');
 
-    if (loginTriggerBtn) loginTriggerBtn.style.display = 'none';
-    if (userProfile) userProfile.style.display = 'flex';
-    if (userDisplayName) userDisplayName.textContent = currentUser.name;
-    if (userHandle) userHandle.textContent = currentUser.username;
+    if (currentUser) {
+        if (loginTriggerBtn) loginTriggerBtn.style.display = 'none';
+        if (userProfile) userProfile.style.display = 'flex';
+        if (userDisplayName) userDisplayName.textContent = currentUser.name;
+        if (userHandle) userHandle.textContent = currentUser.username;
 
-    const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
-    if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
+        const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
+        if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
+    }
 
-    if (isAdmin()) {
-        if (adminPanel) adminPanel.style.display = 'block';
-    } else {
-        if (adminPanel) adminPanel.style.display = 'none';
+    if (adminPanel) {
+        adminPanel.style.display = isAdmin() ? 'block' : 'none';
     }
 
     loadProjects();
@@ -69,21 +62,24 @@ function applyUserSession() {
 function resetUserSession() {
     currentUser = null;
     localStorage.removeItem('tbf_user');
-    if (loginTriggerBtn) loginTriggerBtn.style.display = 'inline-block';
-    if (userProfile) userProfile.style.display = 'none';
-    if (adminPanel) adminPanel.style.display = 'none';
-    if (termPrompt) termPrompt.textContent = 'guest@tbfhub:~$';
-    
-    loadProjects();
+    location.reload();
 }
+
+// Події модалки
+const loginTriggerBtn = document.getElementById('login-trigger-btn');
+const loginModal = document.getElementById('login-modal');
+const saveUserBtn = document.getElementById('save-user-btn');
+const closeModalBtn = document.getElementById('close-modal-btn');
+const logoutBtn = document.getElementById('logout-btn');
 
 if (loginTriggerBtn) loginTriggerBtn.addEventListener('click', () => loginModal.style.display = 'flex');
 if (closeModalBtn) closeModalBtn.addEventListener('click', () => loginModal.style.display = 'none');
+if (logoutBtn) logoutBtn.addEventListener('click', resetUserSession);
 
 if (saveUserBtn) {
     saveUserBtn.addEventListener('click', () => {
-        let username = document.getElementById('input-username').value.trim();
-        let name = document.getElementById('input-displayname').value.trim();
+        let username = document.getElementById('input-username')?.value.trim() || '';
+        let name = document.getElementById('input-displayname')?.value.trim() || '';
 
         if (!username) return alert('Заповни юзернейм!');
         if (!username.startsWith('@')) username = '@' + username;
@@ -96,34 +92,54 @@ if (saveUserBtn) {
         currentUser = { username: username.toLowerCase(), name: name };
         localStorage.setItem('tbf_user', JSON.stringify(currentUser));
         
-        loginModal.style.display = 'none';
+        if (loginModal) loginModal.style.display = 'none';
         applyUserSession();
     });
 }
 
-if (logoutBtn) logoutBtn.addEventListener('click', resetUserSession);
+// --- 2. Публікація проєктів ---
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
 
-// --- 2. Публікація проєктів у БД ---
-const publishBtn = document.getElementById('publish-btn');
+    // Перевіряємо кнопку публікації
+    if (btn.id === 'publish-btn' || btn.classList.contains('admin-submit-btn') || btn.innerText.includes('Опублікувати')) {
+        e.preventDefault();
 
-if (publishBtn) {
-    publishBtn.addEventListener('click', () => {
         if (!isAdmin()) {
             alert('Тільки @cocofembo може публікувати проєкти!');
             return;
         }
 
-        const title = document.getElementById('proj-title').value.trim();
-        const tag = document.getElementById('proj-tag').value.trim();
-        const desc = document.getElementById('proj-desc').value.trim();
-        const code = document.getElementById('proj-code').value.trim();
+        const adminContainer = btn.closest('.admin-section') || btn.closest('#admin-panel') || btn.parentElement;
+        const fields = Array.from(adminContainer.querySelectorAll('input, textarea'));
+
+        let title = '', tag = '', desc = '', code = '';
+
+        // Шукаємо значення за ID або за плейсхолдером
+        fields.forEach(f => {
+            const id = (f.id || '').toLowerCase();
+            const ph = (f.placeholder || '').toLowerCase();
+
+            if (id.includes('title') || ph.includes('назва')) title = f.value.trim();
+            else if (id.includes('tag') || ph.includes('тег') || ph.includes('стек')) tag = f.value.trim();
+            else if (id.includes('desc') || ph.includes('опис') || f.tagName === 'TEXTAREA') desc = f.value.trim();
+            else if (id.includes('code') || ph.includes('команда') || ph.includes('посилання')) code = f.value.trim();
+        });
+
+        // Запасний варіант — взяття за порядком елементів
+        if (!title && fields[0]) title = fields[0].value.trim();
+        if (!tag && fields[1]) tag = fields[1].value.trim();
+        if (!desc && fields[2]) desc = fields[2].value.trim();
+        if (!code && fields[3]) code = fields[3].value.trim();
 
         if (!title || !desc) {
-            alert('Заповни назву та опис!');
+            alert('Заповни Назву та Опис проєкту!');
             return;
         }
 
-        publishBtn.innerText = "Публікація...";
+        const originalText = btn.innerText;
+        btn.innerText = "Публікація...";
 
         db.ref('projects').push({
             title: title,
@@ -133,21 +149,19 @@ if (publishBtn) {
             author: currentUser.name,
             timestamp: Date.now()
         }).then(() => {
-            document.getElementById('proj-title').value = '';
-            document.getElementById('proj-tag').value = '';
-            document.getElementById('proj-desc').value = '';
-            document.getElementById('proj-code').value = '';
-            publishBtn.innerText = "🚀 Опублікувати проєкт";
-            alert("Опубліковано!");
+            fields.forEach(f => f.value = '');
+            btn.innerText = originalText;
+            alert("Опубліковано успішно!");
         }).catch(err => {
             alert("Помилка БД: " + err.message);
-            publishBtn.innerText = "🚀 Опублікувати проєкт";
+            btn.innerText = originalText;
         });
-    });
-}
+    }
+});
 
 // --- 3. Відображення та видалення проєктів ---
 function loadProjects() {
+    const projectsContainer = document.getElementById('projects-container') || document.querySelector('.projects-grid');
     if (!projectsContainer) return;
 
     db.ref('projects').on('value', (snapshot) => {
@@ -179,7 +193,7 @@ function loadProjects() {
     });
 }
 
-// Функція видалення
+// Глобальна функція видалення
 window.deleteProject = function(id) {
     if (!isAdmin()) return;
     if (confirm("Точно видалити цей проєкт?")) {
@@ -196,7 +210,7 @@ function escapeHtml(text) {
 
 // --- 4. Інтерактивний Термінал ---
 const cmdInput = document.getElementById('cmd-input');
-const terminalOutput = document.getElementById('terminal-output');
+const terminalOutput = document.getElementById('terminal-output') || document.querySelector('.terminal-body');
 
 if (cmdInput) {
     cmdInput.addEventListener('keypress', (e) => {
@@ -204,10 +218,12 @@ if (cmdInput) {
             const cmd = cmdInput.value.trim().toLowerCase();
             cmdInput.value = '';
 
-            const promptText = termPrompt ? termPrompt.textContent : 'guest@tbfhub:~$';
+            const termPrompt = document.getElementById('term-prompt');
+            const promptText = termPrompt ? termPrompt.textContent : 'cocofembo@tbfhub:~$';
+            
             const line = document.createElement('p');
             line.innerHTML = `<span class="prompt">${promptText}</span> ${escapeHtml(cmd)}`;
-            terminalOutput.appendChild(line);
+            if (terminalOutput) terminalOutput.appendChild(line);
 
             let response = '';
 
@@ -232,13 +248,13 @@ if (cmdInput) {
                 case 'whoami':
                     response = currentUser 
                         ? `Logged in as: <span class="highlight">${escapeHtml(currentUser.name)}</span> (${escapeHtml(currentUser.username)})`
-                        : 'Not logged in. Click "Увійти" above.';
+                        : 'Not logged in.';
                     break;
                 case 'info':
                     response = '🔥 TBFHUB v1.0 — Web-Portfolio & Termux Ecosystem Showcase.';
                     break;
                 case 'clear':
-                    terminalOutput.innerHTML = '';
+                    if (terminalOutput) terminalOutput.innerHTML = '';
                     return;
                 case '':
                     return;
@@ -252,6 +268,7 @@ if (cmdInput) {
 }
 
 function printTermMsg(msg) {
+    if (!terminalOutput) return;
     const resLine = document.createElement('p');
     resLine.className = 'system-msg';
     resLine.innerHTML = msg;
@@ -260,4 +277,4 @@ function printTermMsg(msg) {
 }
 
 loadSession();
-
+      
