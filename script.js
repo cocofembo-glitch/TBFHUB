@@ -17,26 +17,33 @@ const db = firebase.database();
 
 let currentUser = null;
 
-// Перевірка чи є користувач адміном
 function isAdmin() {
     return currentUser && currentUser.username && currentUser.username.toLowerCase() === '@cocofembo';
 }
 
-// --- 1. Сесії користувачів ---
+// --- 1. Логіка сесії користувача ---
 function loadSession() {
     const savedData = localStorage.getItem('tbf_user');
-    if (savedData) {
-        currentUser = JSON.parse(savedData);
-    } else {
+    
+    // Якщо сесії немає взагалі і це перший запуск — ставимо за замовчуванням адміна
+    if (savedData === null) {
         currentUser = { username: '@cocofembo', name: 'ADMIN.TBF' };
         localStorage.setItem('tbf_user', JSON.stringify(currentUser));
+    } else if (savedData === 'guest') {
+        currentUser = null;
+    } else {
+        try {
+            currentUser = JSON.parse(savedData);
+        } catch(e) {
+            currentUser = null;
+        }
     }
     applyUserSession();
 }
 
 function applyUserSession() {
     const loginTriggerBtn = document.getElementById('login-trigger-btn');
-    const userProfile = document.getElementById('user-profile');
+    const userProfile = document.getElementById('user-profile') || document.querySelector('.user-profile');
     const userDisplayName = document.getElementById('user-display-name');
     const userHandle = document.getElementById('user-handle');
     const adminPanel = document.getElementById('admin-panel') || document.querySelector('.admin-section');
@@ -50,6 +57,10 @@ function applyUserSession() {
 
         const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
         if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
+    } else {
+        if (loginTriggerBtn) loginTriggerBtn.style.display = 'inline-block';
+        if (userProfile) userProfile.style.display = 'none';
+        if (termPrompt) termPrompt.textContent = 'guest@tbfhub:~$';
     }
 
     if (adminPanel) {
@@ -61,20 +72,28 @@ function applyUserSession() {
 
 function resetUserSession() {
     currentUser = null;
-    localStorage.removeItem('tbf_user');
-    location.reload();
+    localStorage.setItem('tbf_user', 'guest'); // Позначаємо, що користувач свідомо вийшов
+    applyUserSession();
 }
 
-// Події модалки
+// Події модалки та кнопок
 const loginTriggerBtn = document.getElementById('login-trigger-btn');
 const loginModal = document.getElementById('login-modal');
 const saveUserBtn = document.getElementById('save-user-btn');
 const closeModalBtn = document.getElementById('close-modal-btn');
-const logoutBtn = document.getElementById('logout-btn');
 
 if (loginTriggerBtn) loginTriggerBtn.addEventListener('click', () => loginModal.style.display = 'flex');
 if (closeModalBtn) closeModalBtn.addEventListener('click', () => loginModal.style.display = 'none');
-if (logoutBtn) logoutBtn.addEventListener('click', resetUserSession);
+
+// Обробка кліку на хрестик (вихід) у юзер-блоці
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'logout-btn' || e.target.classList.contains('logout-btn') || e.target.textContent === '✕' || e.target.textContent === 'X') {
+        if (e.target.closest('.user-profile') || e.target.closest('#user-profile')) {
+            e.preventDefault();
+            resetUserSession();
+        }
+    }
+});
 
 if (saveUserBtn) {
     saveUserBtn.addEventListener('click', () => {
@@ -102,7 +121,6 @@ document.addEventListener('click', function(e) {
     const btn = e.target.closest('button');
     if (!btn) return;
 
-    // Перевіряємо кнопку публікації
     if (btn.id === 'publish-btn' || btn.classList.contains('admin-submit-btn') || btn.innerText.includes('Опублікувати')) {
         e.preventDefault();
 
@@ -116,7 +134,6 @@ document.addEventListener('click', function(e) {
 
         let title = '', tag = '', desc = '', code = '';
 
-        // Шукаємо значення за ID або за плейсхолдером
         fields.forEach(f => {
             const id = (f.id || '').toLowerCase();
             const ph = (f.placeholder || '').toLowerCase();
@@ -127,7 +144,6 @@ document.addEventListener('click', function(e) {
             else if (id.includes('code') || ph.includes('команда') || ph.includes('посилання')) code = f.value.trim();
         });
 
-        // Запасний варіант — взяття за порядком елементів
         if (!title && fields[0]) title = fields[0].value.trim();
         if (!tag && fields[1]) tag = fields[1].value.trim();
         if (!desc && fields[2]) desc = fields[2].value.trim();
@@ -193,7 +209,6 @@ function loadProjects() {
     });
 }
 
-// Глобальна функція видалення
 window.deleteProject = function(id) {
     if (!isAdmin()) return;
     if (confirm("Точно видалити цей проєкт?")) {
@@ -219,7 +234,7 @@ if (cmdInput) {
             cmdInput.value = '';
 
             const termPrompt = document.getElementById('term-prompt');
-            const promptText = termPrompt ? termPrompt.textContent : 'cocofembo@tbfhub:~$';
+            const promptText = termPrompt ? termPrompt.textContent : 'guest@tbfhub:~$';
             
             const line = document.createElement('p');
             line.innerHTML = `<span class="prompt">${promptText}</span> ${escapeHtml(cmd)}`;
@@ -277,4 +292,4 @@ function printTermMsg(msg) {
 }
 
 loadSession();
-      
+              
