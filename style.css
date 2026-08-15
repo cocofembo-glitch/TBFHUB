@@ -35,10 +35,39 @@ body {
 }
 .logo span { color: var(--pink); }
 
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 nav a {
     color: #888;
     text-decoration: none;
-    margin-right: 15px;
+}
+
+/* Юзер-блок у навбарі */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    background: #181a29;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #2a2d45;
+}
+
+.user-handle {
+    color: var(--pink);
+    font-weight: bold;
+}
+
+.logout-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
 }
 
 .login-btn, #save-user-btn, .admin-submit-btn {
@@ -159,6 +188,8 @@ nav a {
     border: 1px solid #222436;
     padding: 15px;
     border-radius: 6px;
+    display: flex;
+    flex-direction: column;
 }
 
 .project-header {
@@ -185,6 +216,25 @@ nav a {
     margin-top: 10px;
 }
 
+/* Кнопка видалення для Адміна */
+.delete-btn {
+    background: #ff5f56;
+    color: #ffffff;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 15px;
+    align-self: flex-start;
+    transition: 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #ff2a1f;
+}
+
 /* Адмінка */
 .admin-section {
     background: rgba(255,0,127,0.05);
@@ -194,5 +244,10 @@ nav a {
     margin-bottom: 25px;
 }
 
-.admin-form { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-
+.admin-form { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    margin-top: 10px; 
+    }
+             
