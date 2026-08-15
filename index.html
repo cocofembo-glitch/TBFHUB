@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBFHUB — Ecosystem & Web-Portfolio</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <meta name="theme-color" content="#0d0e15">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">⚡ TBF<span>HUB</span></div>
+        <nav>
+            <a href="#terminal">// Terminal</a>
+            <a href="#projects">// Projects</a>
+
+            <!-- Блок користувача -->
+            <div id="user-block">
+                <button id="login-trigger-btn" class="login-btn">👤 Увійти</button>
+                <div id="user-profile" class="user-profile" style="display: none;">
+                    <span id="user-display-name"></span>
+                    <span id="user-handle" class="user-handle"></span>
+                    <button id="logout-btn" class="logout-btn">❌</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Модальне вікно входу -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Вхід в системe TBFHUB</h3>
+            <input type="text" id="input-username" placeholder="Юзернейм (напр. @cocofembo)">
+            <input type="text" id="input-displayname" placeholder="Ім'я (напр. ADMIN.TBF)">
+            <button id="save-user-btn">Зберегти</button>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- Адмін-панель (Тільки для @cocofembo) -->
+        <section id="admin-panel" class="admin-section" style="display: none;">
+            <h2>⚡ Admin Panel // Publish New Project</h2>
+            <form id="add-project-form" class="admin-form">
+                <input type="text" id="proj-title" placeholder="Назва проєкту" required>
+                <input type="text" id="proj-tag" placeholder="Тег / Стек" required>
+                <textarea id="proj-desc" placeholder="Опис проєкту..." required></textarea>
+                <input type="text" id="proj-code" placeholder="Команда або посилання (необов'язково)">
+                <button type="submit" class="admin-submit-btn">🚀 Опублікувати проєкт</button>
+            </form>
+        </section>
+
+        <!-- Інтерактивний Термінал -->
+        <section id="terminal" class="terminal-section">
+            <div class="terminal-header">
+                <div class="dots">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <div class="terminal-title">tbf-shell — bash</div>
+            </div>
+            <div class="terminal-body" id="terminal-output">
+                <p class="system-msg">🔥 Welcome to TBFHUB v1.0!</p>
+                <p class="system-msg">Type <span class="highlight">'help'</span> to see available commands.</p>
+            </div>
+            <div class="terminal-input-line">
+                <span class="prompt" id="term-prompt">guest@tbfhub:~$</span>
+                <input type="text" id="cmd-input" placeholder="Enter command..." autofocus autocomplete="off">
+            </div>
+        </section>
+
+        <!-- Секція Проєктів -->
+        <section id="projects" class="projects-section">
+            <h2>// Ecosystem Projects</h2>
+            <div class="projects-grid" id="projects-container">
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
