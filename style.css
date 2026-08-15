@@ -1,0 +1,198 @@
+:root {
+    --bg-color: #0d0e15;
+    --card-bg: #151621;
+    --accent: #00f0ff;
+    --pink: #ff007f;
+    --text: #e0e6ed;
+    --term-bg: #090a0f;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Fira Code', monospace;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    padding-bottom: 50px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%;
+    background: #11121c;
+    border-bottom: 1px solid #222436;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+.logo span { color: var(--pink); }
+
+nav a {
+    color: #888;
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+.login-btn, #save-user-btn, .admin-submit-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+/* Модалка */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 90%;
+    max-width: 350px;
+}
+
+.modal-content input, .admin-form input, .admin-form textarea {
+    background: #090a0f;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#close-modal-btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Термінал */
+.terminal-section {
+    background: var(--term-bg);
+    border: 1px solid #222436;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.terminal-header {
+    background: #151621;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.dots { display: flex; gap: 6px; margin-right: 15px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.red { background: #ff5f56; }
+.yellow { background: #ffbd2e; }
+.green { background: #27c93f; }
+
+.terminal-title { font-size: 0.8rem; color: #777; }
+.terminal-body { padding: 15px; min-height: 150px; max-height: 250px; overflow-y: auto; }
+.system-msg { color: #aaa; margin-bottom: 5px; }
+.highlight { color: var(--accent); }
+
+.terminal-input-line {
+    display: flex;
+    padding: 10px 15px;
+    background: #0d0e15;
+    border-top: 1px solid #1a1b2a;
+}
+
+.prompt { color: #27c93f; margin-right: 10px; font-weight: bold; }
+#cmd-input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    outline: none;
+    width: 100%;
+}
+
+/* Проєкти */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.project-card {
+    background: var(--card-bg);
+    border: 1px solid #222436;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.project-tag {
+    font-size: 0.7rem;
+    background: rgba(0,240,255,0.1);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.project-code {
+    background: #000;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #27c93f;
+    margin-top: 10px;
+}
+
+/* Адмінка */
+.admin-section {
+    background: rgba(255,0,127,0.05);
+    border: 1px solid var(--pink);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.admin-form { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+
