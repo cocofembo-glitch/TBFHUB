@@ -9,10 +9,11 @@
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="theme-color" content="#0d0e15">
 
-    <link rel="stylesheet" href="style.css">
+    <!-- Точне підключення CSS -->
+    <link rel="stylesheet" href="./style.css">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Firebase SDK (Compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
@@ -24,7 +25,6 @@
             <a href="#terminal">// Terminal</a>
             <a href="#projects">// Projects</a>
 
-            <!-- Блок користувача -->
             <div id="user-block">
                 <button id="login-trigger-btn" class="login-btn">👤 Увійти</button>
                 <div id="user-profile" class="user-profile" style="display: none;">
@@ -36,18 +36,21 @@
         </nav>
     </header>
 
-    <!-- Модальне вікно входу -->
-    <div id="login-modal" class="modal" style="display: none;">
+    <!-- Очищене модальне вікно (без підказок адміна) -->
+    <div id="login-modal" class="modal">
         <div class="modal-content">
-            <h3>Вхід в системe TBFHUB</h3>
-            <input type="text" id="input-username" placeholder="Юзернейм (напр. @cocofembo)">
-            <input type="text" id="input-displayname" placeholder="Ім'я (напр. ADMIN.TBF)">
-            <button id="save-user-btn">Зберегти</button>
+            <h3>Вхід у систему</h3>
+            <input type="text" id="input-username" placeholder="Юзернейм">
+            <input type="text" id="input-displayname" placeholder="Ваше ім'я">
+            <div class="modal-actions">
+                <button id="save-user-btn">Зберегти</button>
+                <button id="close-modal-btn">Скасувати</button>
+            </div>
         </div>
     </div>
 
     <main class="container">
-        <!-- Адмін-панель (Тільки для @cocofembo) -->
+        <!-- Адмін-панель -->
         <section id="admin-panel" class="admin-section" style="display: none;">
             <h2>⚡ Admin Panel // Publish New Project</h2>
             <form id="add-project-form" class="admin-form">
@@ -59,7 +62,7 @@
             </form>
         </section>
 
-        <!-- Інтерактивний Термінал -->
+        <!-- Термінал -->
         <section id="terminal" class="terminal-section">
             <div class="terminal-header">
                 <div class="dots">
@@ -79,7 +82,7 @@
             </div>
         </section>
 
-        <!-- Секція Проєктів -->
+        <!-- Проєкти -->
         <section id="projects" class="projects-section">
             <h2>// Ecosystem Projects</h2>
             <div class="projects-grid" id="projects-container">
@@ -87,7 +90,7 @@
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>
 
