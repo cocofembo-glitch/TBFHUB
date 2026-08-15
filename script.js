@@ -30,6 +30,11 @@ const termPrompt = document.getElementById('term-prompt');
 
 let currentUser = null;
 
+// Перевірка чи є користувач адміном
+function isAdmin() {
+    return currentUser && currentUser.username && currentUser.username.toLowerCase() === '@cocofembo';
+}
+
 // --- 1. Логіка користувачів (LocalStorage) ---
 function loadSession() {
     const savedData = localStorage.getItem('tbf_user');
@@ -52,13 +57,12 @@ function applyUserSession() {
     const cleanUsername = currentUser.username.replace('@', '').toLowerCase();
     if (termPrompt) termPrompt.textContent = `${cleanUsername}@tbfhub:~$`;
 
-    if (currentUser.username.toLowerCase() === '@cocofembo') {
+    if (isAdmin()) {
         if (adminPanel) adminPanel.style.display = 'block';
     } else {
         if (adminPanel) adminPanel.style.display = 'none';
     }
 
-    // Оновлюємо відображення картка-кнопок
     loadProjects();
 }
 
@@ -85,11 +89,11 @@ if (saveUserBtn) {
         if (!username.startsWith('@')) username = '@' + username;
         if (!name) name = username;
 
-        if (username.toLowerCase() === '@cocofembo' && name === '@cocofembo') {
+        if (username.toLowerCase() === '@cocofembo') {
             name = 'ADMIN.TBF';
         }
 
-        currentUser = { username, name };
+        currentUser = { username: username.toLowerCase(), name: name };
         localStorage.setItem('tbf_user', JSON.stringify(currentUser));
         
         loginModal.style.display = 'none';
@@ -104,7 +108,7 @@ const publishBtn = document.getElementById('publish-btn');
 
 if (publishBtn) {
     publishBtn.addEventListener('click', () => {
-        if (!currentUser || currentUser.username.toLowerCase() !== '@cocofembo') {
+        if (!isAdmin()) {
             alert('Тільки @cocofembo може публікувати проєкти!');
             return;
         }
@@ -134,8 +138,9 @@ if (publishBtn) {
             document.getElementById('proj-desc').value = '';
             document.getElementById('proj-code').value = '';
             publishBtn.innerText = "🚀 Опублікувати проєкт";
+            alert("Опубліковано!");
         }).catch(err => {
-            alert("Помилка: " + err.message);
+            alert("Помилка БД: " + err.message);
             publishBtn.innerText = "🚀 Опублікувати проєкт";
         });
     });
@@ -154,7 +159,6 @@ function loadProjects() {
             return;
         }
 
-        const isAdmin = currentUser && currentUser.username.toLowerCase() === '@cocofembo';
         const projectsArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
         projectsArray.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -168,20 +172,20 @@ function loadProjects() {
                 </div>
                 <p class="project-desc">${escapeHtml(proj.desc)}</p>
                 ${proj.code ? `<div class="project-code"><code>${escapeHtml(proj.code)}</code></div>` : ''}
-                ${isAdmin ? `<button class="delete-btn" onclick="deleteProject('${proj.id}')">🗑 Видалити</button>` : ''}
+                ${isAdmin() ? `<button class="delete-btn" onclick="deleteProject('${proj.id}')">🗑 Видалити</button>` : ''}
             `;
             projectsContainer.appendChild(card);
         });
     });
 }
 
-// Глобальна функція видалення проєкту за ID
+// Функція видалення
 window.deleteProject = function(id) {
-    if (!currentUser || currentUser.username.toLowerCase() !== '@cocofembo') return;
+    if (!isAdmin()) return;
     if (confirm("Точно видалити цей проєкт?")) {
         db.ref('projects/' + id).remove()
             .then(() => alert("Проєкт видалено!"))
-            .catch(err => alert("Помилка видалення: " + err.message));
+            .catch(err => alert("Помилка: " + err.message));
     }
 };
 
@@ -256,4 +260,4 @@ function printTermMsg(msg) {
 }
 
 loadSession();
-                              
+
